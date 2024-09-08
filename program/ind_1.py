@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+
 class Time:
     def __init__(self, first=0, second=0):
         self.__first = first
