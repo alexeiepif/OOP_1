@@ -18,38 +18,83 @@
 # в евро, получить сумму прописью (преобразовать в числительное).
 
 
-class Account:
-    rub_dollar_rate = 80
-    rub_eur_rate = 90
-
-    def __init__(self, owner, account_number, interest_rate, balance):
+class AccountOwner:
+    def __init__(self, owner: str):
         self.__owner = owner
-        self.__account_number = account_number
-        self.__interest_rate = interest_rate
-        self.__balance = balance
 
-    def change_owner(self, new_owner):
+    def read(self):
+        self.__owner = input("Введите владельца счета: ")
+
+    @property
+    def owner(self) -> str:
+        return self.__owner
+
+    @owner.setter
+    def owner(self, new_owner: str):
         self.__owner = new_owner
 
-    def withdraw(self, amount):
-        if amount > self.__balance:
+
+class AccountBalance:
+    def __init__(self, balance: float):
+        self.__balance = balance
+
+    @property
+    def balance(self):
+        return self.__balance
+
+    @balance.setter
+    def balance(self, new_balance: float):
+        self.__balance = new_balance
+
+
+class BalanceOperations:
+    def __init__(self, acc_balance: AccountBalance):
+        self.__acc_balance = acc_balance
+
+    def withdraw(self, amount: float):
+        if amount > self.__acc_balance.balance:
             print("Недостаточно средств на счете.")
         else:
-            self.__balance -= amount
+            self.__acc_balance.balance -= amount
 
-    def deposit(self, amount):
-        self.__balance += amount
+    def deposit(self, amount: float):
+        self.__acc_balance.balance += amount
+
+
+class InterestConverter:
+    def __init__(self, acc_balance: AccountBalance, interest_rate: float):
+        self.__acc_balance = acc_balance
+        self.__interest_rate = interest_rate
 
     def add_interest(self):
-        self.__balance += self.__balance * self.__interest_rate
+        self.__acc_balance.balance += (
+            self.__acc_balance.balance * self.__interest_rate
+        )
+
+
+class СurrencyConverter:
+    def __init__(
+        self,
+        acc_balance: AccountBalance,
+        rub_dollar_rate: float,
+        rub_eur_rate: float,
+    ):
+        self.__acc_balance = acc_balance
+        self.__rub_dollar_rate = rub_dollar_rate
+        self.__rub_eur_rate = rub_eur_rate
 
     def convert_to_usd(self):
-        return self.__balance * self.rub_dollar_rate
+        return self.__acc_balance.balance * self.__rub_dollar_rate
 
     def convert_to_eur(self):
-        return self.__balance * self.rub_eur_rate
+        return self.__acc_balance.balance * self.__rub_eur_rate
 
-    def amount_in_words(self):
+
+class AmountInWords:
+    def __init__(self, acc_balance: AccountBalance):
+        self.__acc_balance = acc_balance
+
+    def amount_in_words(self) -> str | None:
         # Реализация преобразования суммы в числительное
         sl_n = [
             {
@@ -110,7 +155,7 @@ class Account:
             },
         ]
 
-        bal = list(map(int, str(self.__balance)))
+        bal = list(map(int, str(int(self.__acc_balance.balance))))
         bal.reverse()
         list_bal = []
         if len(bal) == 1:
@@ -133,25 +178,110 @@ class Account:
 
         return str_bal
 
+
+class AccountStorage:
+    def __init__(
+        self,
+        acc_owner: AccountOwner,
+        account_number: int,
+        acc_balance: AccountBalance,
+    ):
+        self.__acc_owner = acc_owner
+        self.__account_number = account_number
+        self.__acc_balance = acc_balance
+
     def display(self):
-        print(f"Владелец счета: {self.__owner}")
+        print(f"Владелец счета: {self.__acc_owner.owner}")
         print(f"Номер счета: {self.__account_number}")
-        print(f"Баланс: {self.__balance} руб")
+        print(f"Баланс: {self.__acc_balance.balance} руб")
+
+
+class Account:
+    def __init__(
+        self,
+        owner: str,
+        account_number: int,
+        interest_rate: float,
+        balance: float,
+        rub_dollar_rate: float,
+        rub_eur_rate: float,
+    ):
+        # Создаем объекты, которые нужны для работы с аккаунтом
+        self.account_owner = AccountOwner(owner)
+        self.account_balance = AccountBalance(balance)
+        self.balance_operations = BalanceOperations(self.account_balance)
+        self.interest_converter = InterestConverter(
+            self.account_balance, interest_rate
+        )
+        self.currency_converter = СurrencyConverter(
+            self.account_balance, rub_dollar_rate, rub_eur_rate
+        )
+        self.am_in_words = AmountInWords(self.account_balance)
+        self.account_storage = AccountStorage(
+            self.account_owner, account_number, self.account_balance
+        )
+
+    # Методы для управления аккаунтом
+    def display(self):
+        self.account_storage.display()
+
+    def change_owner(self, new_owner: str):
+        self.account_owner.owner = new_owner
+
+    def withdraw(self, amount: float):
+        self.balance_operations.withdraw(amount)
+
+    def deposit(self, amount: float):
+        self.balance_operations.deposit(amount)
+
+    def add_interest(self):
+        self.interest_converter.add_interest()
+
+    def convert_to_usd(self):
+        return self.currency_converter.convert_to_usd()
+
+    def convert_to_eur(self):
+        return self.currency_converter.convert_to_eur()
+
+    def amount_in_words(self):
+        return self.am_in_words.amount_in_words()
+
+    def change_currency_converter(
+        self, rub_dollar_rate: float, rub_eur_rate: float
+    ):
+        self.currency_converter = СurrencyConverter(
+            self.account_balance, rub_dollar_rate, rub_eur_rate
+        )
+
+    def change_interest_converter(self, interest_rate: float):
+        self.interest_converter = InterestConverter(
+            self.account_balance, interest_rate
+        )
+
+    def read_owner(self):
+        self.account_owner.read()
 
 
 # Демонстрация возможностей класса
 if __name__ == "__main__":
-    my_account = Account("Иванов", "10032", 0.05, 9045)
+    rub_dollar_rate = 80
+    rub_eur_rate = 90
+    my_account = Account(
+        "Иванов", "10032", 0.05, 9045, rub_dollar_rate, rub_eur_rate
+    )
     my_account.display()
-    # my_account.change_owner("Петров")
-    # my_account.deposit(500)
-    # my_account.withdraw(300)
-    # my_account.add_interest()
-    # print("\nИзменённый счет:\n")
-    # my_account.display()
-    # usd_amount = my_account.convert_to_usd()
-    # print(f"Баланс в USD: ${usd_amount}")
-    # eur_amount = my_account.convert_to_eur()
-    # print(f"Баланс в EUR: €{eur_amount}")
+    my_account.change_owner("Петров")
+    my_account.deposit(500)
+    my_account.withdraw(300)
+    my_account.add_interest()
+    print("\nИзменённый счет:\n")
+    my_account.display()
+    usd_amount = my_account.convert_to_usd()
+    print(f"Баланс в USD: ${usd_amount}")
+    eur_amount = my_account.convert_to_eur()
+    print(f"Баланс в EUR: €{eur_amount}")
     word = my_account.amount_in_words()
-    print(f"Сумма в рублях: {word}")
+    print(f"Округленная сумма в рублях: {word}")
+    my_account.read_owner()
+    print()
+    my_account.display()
