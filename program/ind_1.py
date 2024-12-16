@@ -30,6 +30,7 @@ class Time:
         parts = list(map(int, line.split(":")))
         if len(parts) != 2:
             raise ValueError("Неправильный формат времени")
+        check_time(parts[0], parts[1])
         self.__first, self.__second = parts
 
     def display(self):
@@ -39,11 +40,15 @@ class Time:
         return self.__first * 60 + self.__second
 
 
-def make_time(hours=0, minutes=0):
+def check_time(hours, minutes):
     if not (0 <= hours < 24 and isinstance(hours, int)):
         raise ValueError("Неправильное количество часов")
     if not (0 <= minutes < 60 and isinstance(minutes, int)):
         raise ValueError("Неправильное количество минут")
+
+
+def make_time(hours=0, minutes=0):
+    check_time(hours, minutes)
     return Time(hours, minutes)
 
 
